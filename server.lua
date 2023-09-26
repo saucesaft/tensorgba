@@ -3,6 +3,11 @@ server = nil
 ST_sockets = {}
 nextID = 1
 
+COUNT = 0
+START = false
+GTIME = nil
+GINDEX = 0
+
 local KEY_NAMES = { "A", "B", "s", "S", ">", "<", "^", "v", "R", "L" }
 
 function ST_stop(id)
@@ -34,7 +39,13 @@ function ST_received(id)
 		if p then
 			if p ~= "alive?" then
 				if string.find(p, "cmd") then
-					console:log("command!")
+					if string.find(p, "start") then
+						console:log("start recording...")
+						START = true
+					elseif string.find(p, "stop") then
+						console:log("stop recording...")
+						START = false
+					end
 				else
 					console:log(ST_format(id, p:match("^(.-)%s*$")))
 				end
@@ -82,7 +93,37 @@ function ST_accept()
 	console:log(ST_format(id, "Connected"))
 end
 
-callbacks:add("keysRead", ST_scankeys)
+function F_counter()
+	if START ~= true then
+		return
+	end
+
+	if COUNT == 20 then -- every 200 ms
+		local time = os.time(os.date("!*t"))
+
+		if time == GTIME then
+			GINDEX = GINDEX + 1
+		else
+			GINDEX = 0
+		end
+
+		local filename = time .. "_" .. GINDEX
+
+		local keys = emu:getKeys()
+		emu:screenshot("/Users/saucesaft/Developer/tensorgba/pics/" .. filename .. ".png")
+
+		for _, sock in pairs(ST_sockets) do
+			if sock then sock:send( tostring( keys ) .. "<->" .. filename) end
+		end
+
+		GTIME = time
+
+		COUNT = 0
+	end
+	COUNT = COUNT + 1
+end
+
+callbacks:add("frame", F_counter)
 
 local port = 8888
 server = nil
