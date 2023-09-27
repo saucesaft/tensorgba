@@ -3,8 +3,8 @@ from keras.layers import Conv2D, Dense, Dropout, Flatten
 
 import tensorflow
 
-IMG_W = 200
-IMG_H = 66
+IMG_W = 240
+IMG_H = 160
 IMG_D = 3
 
 INPUT_SHAPE = (IMG_H, IMG_W, IMG_D)
@@ -16,7 +16,7 @@ def model(keep_prob = 0.8):
 
     model = Sequential()
 
-    # Input plane 3@66x200
+    # Input plane 3@160x240
 
     # Convolutional feature map 24@31x98
     model.add( Conv2D( 24, kernel_size=(5,5), strides=(2,2), activation="relu", input_shape=INPUT_SHAPE ) ) 
