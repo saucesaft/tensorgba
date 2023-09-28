@@ -14,6 +14,8 @@ class Vizualizer(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent.tabs)
 
+        self.shouldexit = False
+
         self.path = parent.path
 
         self.runvideo = False
@@ -40,12 +42,14 @@ class Vizualizer(tk.Frame):
         self.right_frame = ttk.Frame(self)
         self.right_frame.pack(side=tk.RIGHT, padx=10, pady=10, fill=tk.BOTH, expand=True)
 
-
         self.img = ttk.Label(self.right_frame)
         self.img.pack(fill=tk.BOTH, expand=True)
 
     def video(self):
         while True:
+            if self.shouldexit:
+                break
+
             # only run if unpaused
             if self.runvideo:
 
@@ -96,6 +100,8 @@ class GBARecorder:
     def __init__(self, root):
         self.root = root
         self.root.title("GBA Recorder")
+
+        self.shouldexit = False
         
         self.thread = threading.Thread(target=self.recv, args=())
 
@@ -157,6 +163,8 @@ class GBARecorder:
 
     def recv(self):
         while True:
+            if self.shouldexit:
+                break
 
             data = self.sock.recv(1024)
             if not data:
@@ -208,10 +216,17 @@ class GBARecorder:
                 self.log_text.insert(tk.END, "\n")
                 self.log_text.see(tk.END)
 
+    def exit(self):
+        self.shouldexit = True
+        self.viz_frame.shouldexit = True
+
+
     def run(self):
         self.thread.start()
         self.viz_frame.thread.start()
         self.root.mainloop()
+
+        self.exit()
 
 def main():
     root = tk.Tk()
