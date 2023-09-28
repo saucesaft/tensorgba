@@ -119,16 +119,17 @@ class GBARecorder:
         # header = ["timestamp", "a", "b", "right", "left", "rb"]
         # self.csv.writerow(header)
 
-        self.create_widgets()
-
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((HOST, PORT))
 
             self.sock.sendall( ("cmd set root '" + self.path + "'").encode("ascii") )
         except:
-            tkmb.showerror(title="no connection possible", message="please open mgba :(")
-            exit()
+            self.sock = None
+            # tkmb.showerror(title="no connection possible", message="please open mgba :(")
+            # exit()
+
+        self.create_widgets()
 
     def pausetoggle(self):
 
@@ -163,6 +164,17 @@ class GBARecorder:
 
         self.startstop = not self.startstop
 
+    def reconnect(self):
+        try:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.connect((HOST, PORT))
+
+            self.connbtn["state"] = "disabled"
+            self.sock.sendall( ("cmd set root '" + self.path + "'").encode("ascii") )
+        except:
+            self.connbtn["state"] = "normal"
+            self.sock = None
+
     def create_widgets(self):
         self.tabs = ttk.Notebook(self.root)
 
@@ -182,6 +194,13 @@ class GBARecorder:
         self.startstopbtn = ttk.Button(self.left_frame, text="start", command=self.pausetoggle)
         self.startstopbtn.pack(pady=10)
         self.startstopbtn["state"] = "disabled"
+
+        self.connbtn = ttk.Button(self.left_frame, text="connect", command=self.reconnect)
+        self.connbtn.pack(pady=10)
+        if self.sock == None:
+            self.connbtn["state"] = "normal"
+        else:
+            self.connbtn["state"] = "disabled"
 
         self.right_frame = ttk.Frame(self.rec_frame)
         self.right_frame.pack(side=tk.RIGHT, padx=10, pady=10, fill=tk.BOTH, expand=True)
@@ -205,18 +224,29 @@ class GBARecorder:
 
     def recv(self):
         while True:
+            if self.sock == None:
+                continue
+
             if self.shouldexit:
                 break
 
-            data = self.sock.recv(1024)
-            if not data:
+            try:
+                data = self.sock.recv(1024)
+            except:
+                self.connbtn["state"] = "normal"
+                self.sock = None
                 continue
 
             data = data.decode('UTF-8')
             data = data.split("<->")
 
             controller = data[0]
-            controller = int(controller)
+            try:
+                controller = int(controller)
+            except:
+                self.connbtn["state"] = "normal"
+                self.sock = None
+                continue
 
             BUTTON_A = 1 << 0
             BUTTON_B = 1 << 1
@@ -231,7 +261,9 @@ class GBARecorder:
             try:
                 self.sock.sendall("alive?".encode())
             except:
-                break
+                self.connbtn["state"] = "normal"
+                self.sock = None
+                continue
 
             row = [timestamp, 0, 0, 0, 0, 0]
 
@@ -257,6 +289,8 @@ class GBARecorder:
 
                 self.log_text.insert(tk.END, "\n")
                 self.log_text.see(tk.END)
+
+        # self.connected = False
 
     def exit(self):
         self.shouldexit = True
