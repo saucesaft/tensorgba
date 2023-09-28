@@ -1,8 +1,10 @@
 #!/usr/bin/env python
+import os
 import threading
 import socket
 import tkinter as tk
 from tkinter import ttk
+import tkinter.messagebox as tkmb
 import csv
 import time
 from PIL import ImageTk, Image
@@ -102,37 +104,70 @@ class GBARecorder:
         self.root.title("GBA Recorder")
 
         self.shouldexit = False
+        self.startstop = False
         
         self.thread = threading.Thread(target=self.recv, args=())
+
+        self.path = os.getcwd() + "/data"
+
+        self.csv_filename= "info.csv"
+
+        # self.file = open(self.path + "/" + self.csv_filename, 'a', newline='')
+        # self.csv = csv.writer(self.file)
+
+        # write header
+        # header = ["timestamp", "a", "b", "right", "left", "rb"]
+        # self.csv.writerow(header)
+
+        self.create_widgets()
 
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((HOST, PORT))
+
+            self.sock.sendall( ("cmd set root '" + self.path + "'").encode("ascii") )
         except:
-            self.sock
+            tkmb.showerror(title="no connection possible", message="please open mgba :(")
+            exit()
 
-        self.path = "data.csv"
+    def pausetoggle(self):
 
-        self.file = open(self.path, 'a', newline='')
-        self.csv = csv.writer(self.file)
+        if self.startstop:
+            self.startstopbtn.config(text = "start")
+            self.currtxt["state"] = "normal"
 
-        # write header
-        header = ["timestamp", "a", "b", "right", "left", "rb"]
-        self.csv.writerow(header)
+            self.file.close()
 
-        self.create_widgets()
-        
-    def start(self):
-        self.file = open('data.csv', 'a', newline='')
-        self.csv = csv.writer(self.file)
-        self.sock.sendall( bytes("cmd start", 'ascii') )
+            self.sock.sendall( bytes("cmd stop", 'ascii') )
 
-    def stop(self):
-        self.file.close()
-        self.sock.sendall( bytes("cmd stop", 'ascii') )
+        else:
+            self.startstopbtn.config(text = "stop")
+            self.currtxt["state"] = "disabled"
+
+            fpath = self.path + '/' + self.currtxt_val.get()
+            fppath = self.path + '/' + self.currtxt_val.get() + "/pics"
+
+            if not os.path.exists(fpath):
+                os.makedirs(fpath)
+                os.makedirs(fppath)
+
+            if not os.path.exists(fppath):
+                os.makedirs(fppath)
+
+            self.file = open(self.path + '/' + self.currtxt_val.get() + '/' + self.csv_filename, 'a+', newline='')
+            self.csv = csv.writer(self.file)
+
+            self.sock.sendall( bytes("cmd set curr '" + self.currtxt_val.get() + "'", 'ascii') )
+
+            self.sock.sendall( bytes("cmd start", 'ascii') )
+
+        self.startstop = not self.startstop
 
     def create_widgets(self):
         self.tabs = ttk.Notebook(self.root)
+
+        self.currtxt_val = tk.StringVar()
+        self.currtxt_val.trace("w", self.changecurr)
         
         # recording frame
         self.rec_frame = ttk.Frame(self.tabs)
@@ -141,11 +176,12 @@ class GBARecorder:
         self.left_frame = ttk.Frame(self.rec_frame)
         self.left_frame.pack(side=tk.LEFT, padx=10, pady=10)
 
-        self.button1 = ttk.Button(self.left_frame, text="start", command=self.start)
-        self.button1.pack(pady=10)
+        self.currtxt = tk.Entry(self.left_frame, textvariable=self.currtxt_val)
+        self.currtxt.pack(pady=10)
 
-        self.button2 = ttk.Button(self.left_frame, text="stop", command=self.stop)
-        self.button2.pack(pady=10)
+        self.startstopbtn = ttk.Button(self.left_frame, text="start", command=self.pausetoggle)
+        self.startstopbtn.pack(pady=10)
+        self.startstopbtn["state"] = "disabled"
 
         self.right_frame = ttk.Frame(self.rec_frame)
         self.right_frame.pack(side=tk.RIGHT, padx=10, pady=10, fill=tk.BOTH, expand=True)
@@ -160,6 +196,12 @@ class GBARecorder:
         self.tabs.add(self.viz_frame, text='visualize')
 
         self.tabs.pack(expand = 1, fill = "both")
+
+    def changecurr(self, *args):
+        if self.currtxt_val.get() != "":
+            self.startstopbtn["state"] = "normal"
+        else:
+            self.startstopbtn["state"] = "disabled"
 
     def recv(self):
         while True:

@@ -8,6 +8,9 @@ START = false
 GTIME = nil
 GINDEX = 0
 
+GROOT = ""
+GCURR = ""
+
 local KEY_NAMES = { "A", "B", "s", "S", ">", "<", "^", "v", "R", "L" }
 
 function ST_stop(id)
@@ -38,17 +41,28 @@ function ST_received(id)
 		local p, err = sock:receive(1024)
 		if p then
 			if p ~= "alive?" then
-				if string.find(p, "cmd") then
-					if string.find(p, "start") then
+
+				 for _, verb, typ  in string.gmatch(p, "(%w+)%s+(%w+)%s*(%w*)%s*'?(.-)'?") do
+					if verb == "set" and typ == "root" then
+						GROOT = string.match(p, "%b''")
+						GROOT = string.gsub(GROOT, "'", '')
+						console:log("changed root directory: ".. GROOT)
+
+					elseif verb == "set" and typ == "curr" then
+						GCURR = string.match(p, "%b''")
+						GCURR = string.gsub(GCURR, "'", '')
+						console:log("changed curr directory: ".. GCURR)
+
+					elseif verb == "start" then
 						console:log("start recording...")
 						START = true
-					elseif string.find(p, "stop") then
+
+					elseif verb == "stop" then
 						console:log("stop recording...")
 						START = false
-					end
-				else
-					console:log(ST_format(id, p:match("^(.-)%s*$")))
-				end
+				    end
+				 end
+
 			end
 		else
 			if err ~= socket.ERRORS.AGAIN then
@@ -56,25 +70,6 @@ function ST_received(id)
 				ST_stop(id)
 			end
 			return
-		end
-	end
-end
-
-function ST_scankeys()
-	local keys = emu:getKeys()
-	if keys ~= lastkeys then
-		lastkeys = keys
-		local msg = "["
-		for i, k in ipairs(KEY_NAMES) do
-			if (keys & (1 << (i - 1))) == 0 then
-				msg = msg .. "_"
-			else
-				msg = msg .. k;
-			end
-		end
-		msg = msg .. "]\n"
-		for id, sock in pairs(ST_sockets) do
-			if sock then sock:send(msg) end
 		end
 	end
 end
@@ -110,7 +105,8 @@ function F_counter()
 		local filename = time .. "_" .. GINDEX
 
 		local keys = emu:getKeys()
-		emu:screenshot("/Users/saucesaft/Developer/tensorgba/pics/" .. filename .. ".png")
+
+		emu:screenshot(GROOT .. "/" .. GCURR .."/pics/" .. filename .. ".png")
 
 		for _, sock in pairs(ST_sockets) do
 			if sock then sock:send( tostring( keys ) .. "<->" .. filename) end

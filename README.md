@@ -4,11 +4,11 @@ implementation of [1604.07316](https://arxiv.org/abs/1604.07317). meant to be ta
 (repo name is tensorgba because it could work with any other game actually)
 
 ## todo
-- [ ] send filepath to save screenshots from python -> lua
-    - [ ] textinput, always send this string as folder inside of original data folder sent first
+- [X] send filepath to save screenshots from python -> lua
+    - [X] textinput, always send this string as folder inside of original data folder sent first
 - [X] implement logging to csv file
-    - [ ] data folder
-        - [ ] several folders inside with pictures and data
+    - [X] data folder
+        - [X] several folders inside with pictures and data
     - [ ] write checkbox, if not pressed it will not write to any file
 - [X] picture visualization
 - [ ] convert csv to npy
