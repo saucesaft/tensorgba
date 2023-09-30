@@ -7,6 +7,7 @@ from tkinter import ttk
 import tkinter.messagebox as tkmb
 import csv
 import time
+import pathlib
 from PIL import ImageTk, Image
 
 HOST = "127.0.0.1"
@@ -21,6 +22,14 @@ class Vizualizer(tk.Frame):
         self.path = parent.path
 
         self.runvideo = False
+
+        flist = [ f.path for f in os.scandir(self.path) if f.is_dir() ]
+        self.options = {}
+
+        for folder in flist:
+            name = pathlib.PurePath(folder).name
+            self.options[name] = folder
+
         self.create_widgets()
 
         self.frame = 0
@@ -35,17 +44,53 @@ class Vizualizer(tk.Frame):
         self.left_frame = ttk.Frame(self)
         self.left_frame.pack(side=tk.LEFT, padx=10, pady=10)
 
+        self.playpause_btn = ttk.Button(self.left_frame, text="refresh", command=self.refresh)
+        self.playpause_btn.pack(pady=10)
+
+        self.selected = tk.StringVar()
+        self.selected.trace('w', self.on_folder_change)
+
+        self.opts_menu = ttk.Combobox(self.left_frame, state="readonly", values= list(self.options.keys()), textvariable=self.selected )
+        self.opts_menu.pack(pady=10)
+
         self.playpause_btn = ttk.Button(self.left_frame, text="play", command=self.playpause)
         self.playpause_btn.pack(pady=10)
+        self.playpause_btn["state"] = "disabled"
 
         self.reset_btn = ttk.Button(self.left_frame, text="reset", command=self.reset)
         self.reset_btn.pack(pady=10)
+        self.reset_btn["state"] = "disabled"
 
         self.right_frame = ttk.Frame(self)
         self.right_frame.pack(side=tk.RIGHT, padx=10, pady=10, fill=tk.BOTH, expand=True)
 
         self.img = ttk.Label(self.right_frame)
         self.img.pack(fill=tk.BOTH, expand=True)
+    
+    def on_folder_change(self, *args):
+        folder = self.selected.get()
+
+        self.runvideo = False
+        self.playpause_btn.config(text = "play")
+        self.img.config(image='')
+
+        if folder == "":
+            self.playpause_btn["state"] = "disabled"
+            self.reset_btn["state"] = "disabled"
+            return
+        else:
+            self.playpause_btn["state"] = "normal"
+            self.reset_btn["state"] = "normal"
+
+        self.frame = 0
+
+    def refresh(self):
+        flist = [ f.path for f in os.scandir(self.path) if f.is_dir() ]
+        self.options = {}
+
+        for folder in flist:
+            name = pathlib.PurePath(folder).name
+            self.options[name] = folder
 
     def video(self):
         while True:
@@ -63,7 +108,7 @@ class Vizualizer(tk.Frame):
                     row = self.csv[ self.frame ] 
 
                 # open image using collumn 0 from csv
-                frame_path = "pics/" + self.csv[self.frame][0] + ".png"
+                frame_path = self.selected_path + "/pics/" + self.csv[self.frame][0] + ".png"
                 frame_img = Image.open(frame_path)
                 frame_img = frame_img.resize(( frame_img.size[0]*2 , frame_img.size[1]*2), Image.LANCZOS)
 
@@ -89,10 +134,12 @@ class Vizualizer(tk.Frame):
 
     def playpause(self):
 
+        self.selected_path = self.path + "/" + self.selected.get()
+
         if self.runvideo:
             self.playpause_btn.config(text = "play")
         else:
-            self.file = open(self.path, 'r', newline='')
+            self.file = open(self.selected_path + "/info.csv", 'r', newline='')
             self.csv = list(csv.reader(self.file))
             self.playpause_btn.config(text = "pause")
 
@@ -105,6 +152,7 @@ class GBARecorder:
 
         self.shouldexit = False
         self.startstop = False
+        self.changing = False
         
         self.thread = threading.Thread(target=self.recv, args=())
 
@@ -134,6 +182,7 @@ class GBARecorder:
     def pausetoggle(self):
 
         if self.startstop:
+            self.changing = True
             self.startstopbtn.config(text = "start")
             self.currtxt["state"] = "normal"
 
@@ -157,6 +206,8 @@ class GBARecorder:
 
             self.file = open(self.path + '/' + self.currtxt_val.get() + '/' + self.csv_filename, 'a+', newline='')
             self.csv = csv.writer(self.file)
+
+            self.changing = False
 
             self.sock.sendall( bytes("cmd set curr '" + self.currtxt_val.get() + "'", 'ascii') )
 
@@ -224,11 +275,11 @@ class GBARecorder:
 
     def recv(self):
         while True:
-            if self.sock == None:
-                continue
-
             if self.shouldexit:
                 break
+
+            if self.sock == None or self.changing:
+                continue
 
             try:
                 data = self.sock.recv(1024)
@@ -273,6 +324,9 @@ class GBARecorder:
                 for idx, btn in enumerate(buttons):
                     if controller & btn:
                         row[idx + 1] = 1
+
+                if self.sock == None or self.changing:
+                    continue
 
                 self.csv.writerow(row)
 

@@ -93,7 +93,7 @@ function F_counter()
 		return
 	end
 
-	if COUNT == 20 then -- every 200 ms
+	if COUNT == 10 then -- every 200 ms
 		local time = os.time(os.date("!*t"))
 
 		if time == GTIME then
