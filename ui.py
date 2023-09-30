@@ -91,6 +91,7 @@ class Vizualizer(tk.Frame):
         for folder in flist:
             name = pathlib.PurePath(folder).name
             self.options[name] = folder
+        self.opts_menu["values"] = list(self.options.keys())
 
     def video(self):
         while True:
@@ -127,7 +128,7 @@ class Vizualizer(tk.Frame):
                 except IndexError:
                     self.frame = 0
 
-                time.sleep(0.2)
+                time.sleep(0.1)
 
     def reset(self):
         self.frame = 0
