@@ -1,7 +1,9 @@
 # mario kart ai
 implementation of [1604.07316](https://arxiv.org/abs/1604.07317). meant to be taught as an small 3 day class system at itesm.
 
-(repo name is tensorgba because it could work with any other game actually)
+**status: ** the repo is on a stage of logging succesfully the data necesarry, model development and testing is what follows.
+
+(repo name is tensorgba because it could work with any other game)
 
 ## todo
 - [X] send filepath to save screenshots from python -> lua
@@ -9,7 +11,6 @@ implementation of [1604.07316](https://arxiv.org/abs/1604.07317). meant to be ta
 - [X] implement logging to csv file
     - [X] data folder
         - [X] several folders inside with pictures and data
-    - [ ] write checkbox, if not pressed it will not write to any file
 - [X] picture visualization
 - [ ] convert csv to npy
 - [ ] train model
@@ -17,4 +18,5 @@ implementation of [1604.07316](https://arxiv.org/abs/1604.07317). meant to be ta
 - [ ] implement logic of receiving inputs in lua
 - [ ] test model
 - [ ] work on ppts
+    -[ ] diagrams
 - [ ] add instructions in how to run
