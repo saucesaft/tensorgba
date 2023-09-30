@@ -4,7 +4,6 @@ import threading
 import socket
 import tkinter as tk
 from tkinter import ttk
-import tkinter.messagebox as tkmb
 from PIL import ImageTk, Image, ImageFile
 
 HOST = "127.0.0.1"

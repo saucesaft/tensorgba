@@ -161,13 +161,6 @@ class GBARecorder:
 
         self.csv_filename= "info.csv"
 
-        # self.file = open(self.path + "/" + self.csv_filename, 'a', newline='')
-        # self.csv = csv.writer(self.file)
-
-        # write header
-        # header = ["timestamp", "a", "b", "right", "left", "rb"]
-        # self.csv.writerow(header)
-
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((HOST, PORT))
@@ -175,8 +168,6 @@ class GBARecorder:
             self.sock.sendall( ("cmd set root '" + self.path + "'").encode("ascii") )
         except:
             self.sock = None
-            # tkmb.showerror(title="no connection possible", message="please open mgba :(")
-            # exit()
 
         self.create_widgets()
 
@@ -331,21 +322,8 @@ class GBARecorder:
 
                 self.csv.writerow(row)
 
-                # if controller & BUTTON_A:
-                #     self.log_text.insert(tk.END, "BUTTON A ")
-                # if controller & BUTTON_B:
-                #     self.log_text.insert(tk.END, "BUTTON B ")
-                # if controller & BUTTON_RIGHT:
-                #     self.log_text.insert(tk.END, "BUTTON RIGHT ")
-                # if controller & BUTTON_LEFT:
-                #     self.log_text.insert(tk.END, "BUTTON LEFT ")
-                # if controller & BUTTON_RB:
-                #     self.log_text.insert(tk.END, "RIGHT BUMPER")
-
                 self.log_text.insert(tk.END, "\n")
                 self.log_text.see(tk.END)
-
-        # self.connected = False
 
     def exit(self):
         self.shouldexit = True

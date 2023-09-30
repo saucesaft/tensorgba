@@ -11,8 +11,6 @@ GINDEX = 0
 GROOT = ""
 GCURR = ""
 
-local KEY_NAMES = { "A", "B", "s", "S", ">", "<", "^", "v", "R", "L" }
-
 function ST_stop(id)
 	local sock = ST_sockets[id]
 	ST_sockets[id] = nil
@@ -93,7 +91,7 @@ function F_counter()
 		return
 	end
 
-	if COUNT == 10 then -- every 200 ms
+	if COUNT == 10 then -- every 100 ms
 		local time = os.time(os.date("!*t"))
 
 		if time == GTIME then
