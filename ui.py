@@ -295,9 +295,10 @@ class GBARecorder:
             BUTTON_B = 1 << 1
             BUTTON_RIGHT = 1 << 4
             BUTTON_LEFT = 1 << 5
+            BUTTON_DOWN = 1 << 7
             BUTTON_RB = 1 << 8
 
-            buttons = [BUTTON_A, BUTTON_B, BUTTON_RIGHT, BUTTON_LEFT, BUTTON_RB]
+            buttons = [BUTTON_A, BUTTON_B, BUTTON_RIGHT, BUTTON_LEFT, BUTTON_DOWN, BUTTON_RB]
 
             timestamp = data[1]
 
@@ -308,7 +309,7 @@ class GBARecorder:
                 self.sock = None
                 continue
 
-            row = [timestamp, 0, 0, 0, 0, 0]
+            row = [timestamp, 0, 0, 0, 0, 0, 0]
 
             if data != "":
                 self.log_text.insert(tk.END, timestamp)
