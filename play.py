@@ -4,12 +4,12 @@ import threading
 import socket
 import tkinter as tk
 from tkinter import ttk
-from PIL import ImageTk, Image, ImageFile
+from PIL import ImageTk, Image
 
 HOST = "127.0.0.1"
 PORT = 8888
 
-ImageFile.LOAD_TRUNCATED_IMAGES = True
+# ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 class GBARecorder:
     def __init__(self, root):
@@ -43,9 +43,6 @@ class GBARecorder:
     def create_widgets(self):
         self.tabs = ttk.Notebook(self.root)
 
-        self.currtxt_val = tk.StringVar()
-        self.currtxt_val.trace("w", self.changecurr)
-        
         # recording frame
         self.rec_frame = ttk.Frame(self.tabs)
         self.rec_frame.pack(fill=tk.BOTH, expand=True)
@@ -67,12 +64,6 @@ class GBARecorder:
         self.img.pack(fill=tk.BOTH, expand=True)
 
         self.tabs.pack(expand = 1, fill = "both")
-
-    def changecurr(self, *args):
-        if self.currtxt_val.get() != "":
-            self.startstopbtn["state"] = "normal"
-        else:
-            self.startstopbtn["state"] = "disabled"
 
     def recv_frame(self):
         while True:
@@ -100,7 +91,7 @@ class GBARecorder:
                 continue
 
             self.img.config(image=photo)
-            self.img.place(relx=0.5, rely=0.5, anchor="c")
+            self.img.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
     def exit(self):
         self.shouldexit = True

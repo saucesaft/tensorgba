@@ -4,7 +4,6 @@ import threading
 import socket
 import tkinter as tk
 from tkinter import ttk
-import tkinter.messagebox as tkmb
 import csv
 import time
 import pathlib
@@ -99,8 +98,7 @@ class Vizualizer(tk.Frame):
                 break
 
             # only run if unpaused
-            if self.runvideo:
-
+            if self.runvideo and self.csv is not None:
                 row = self.csv[ self.frame ] 
 
                 # ignore header row
@@ -117,7 +115,7 @@ class Vizualizer(tk.Frame):
 
                 # add image and center it
                 self.img.config(image=frame_widget)
-                self.img.place(relx=0.5, rely=0.5, anchor="c")
+                self.img.place(relx=0.5, rely=0.5, anchor= tk.CENTER)
 
                 # go to next frame
                 self.frame += 1
@@ -180,7 +178,8 @@ class GBARecorder:
 
             self.file.close()
 
-            self.sock.sendall( bytes("cmd stop", 'ascii') )
+            if isinstance(self.sock, socket.socket):
+                self.sock.sendall( bytes("cmd stop", 'ascii') )
 
         else:
             self.startstopbtn.config(text = "stop")
@@ -196,14 +195,27 @@ class GBARecorder:
             if not os.path.exists(fppath):
                 os.makedirs(fppath)
 
-            self.file = open(self.path + '/' + self.currtxt_val.get() + '/' + self.csv_filename, 'a+', newline='')
+            self.complete_csv_filename = self.path + '/' + self.currtxt_val.get() + '/' + self.csv_filename
+
+            exists = os.path.isfile(self.complete_csv_filename)
+
+            if exists:
+                self.file = open(self.complete_csv_filename, 'a', newline='')
+            else:
+                self.file = open(self.complete_csv_filename, 'w', newline='')
+
             self.csv = csv.writer(self.file)
+
+            if not exists:
+                self.csv.writerow(["timestamp", "a", "b", "right", "left", "down", "rb"])
 
             self.changing = False
 
-            self.sock.sendall( bytes("cmd set curr '" + self.currtxt_val.get() + "'", 'ascii') )
 
-            self.sock.sendall( bytes("cmd start", 'ascii') )
+            if isinstance(self.sock, socket.socket):
+                self.sock.sendall( bytes("cmd set curr '" + self.currtxt_val.get() + "'", 'ascii') )
+
+                self.sock.sendall( bytes("cmd start", 'ascii') )
 
         self.startstop = not self.startstop
 
