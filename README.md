@@ -12,9 +12,10 @@ implementation of [1604.07316](https://arxiv.org/abs/1604.07317). meant to be ta
     - [X] data folder
         - [X] several folders inside with pictures and data
 - [X] picture visualization
-- [ ] convert csv to npy
-- [ ] train model
-    - [ ] test controllers are registered in log window
+- [X] convert csv to npy
+- [X] train model
+    - [X] test controllers are registered in log window
+- [ ] update requirements.txt for all files
 - [ ] implement logic of receiving inputs in lua
 - [ ] test model
 - [ ] work on ppts
