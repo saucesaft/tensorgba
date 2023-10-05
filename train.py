@@ -1,14 +1,19 @@
+import numpy as np
+
 from keras.models import Sequential
 from keras.layers import Conv2D, Dense, Dropout, Flatten
+from keras import optimizers
+from keras.losses import BinaryCrossentropy
+from keras.callbacks import ModelCheckpoint
 
-import tensorflow
+from livelossplot import PlotLossesKeras
 
-IMG_W = 240
-IMG_H = 160
+IMG_W = 200
+IMG_H = 66
 IMG_D = 3
 
 INPUT_SHAPE = (IMG_H, IMG_W, IMG_D)
-OUT_SHAPE = 5
+OUT_SHAPE = 6
 
 def model(keep_prob = 0.8):
 
@@ -47,7 +52,7 @@ def model(keep_prob = 0.8):
     model.add( Dropout( drop_out ) )
 
     # Fully-connected layer 
-    model.add( Dense( 10, activation="relu ") )
+    model.add( Dense( 10, activation="relu") )
     model.add( Dropout( drop_out ) ) 
 
     # Vehicle control
@@ -56,4 +61,19 @@ def model(keep_prob = 0.8):
     return model
 
 if __name__ == '__main__':
-    print(tensorflow.__version__)
+    x_train = np.load("data/X.npy")
+    y_train = np.load("data/y.npy")
+
+    print(x_train.shape[0], 'train samples')
+
+    epochs = 100
+    batch_size = 50
+
+    m = model()
+
+    checkpoint = ModelCheckpoint('model_weights.h5', monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+    callbacks_list = [checkpoint, PlotLossesKeras()]
+
+    m.compile(loss=BinaryCrossentropy, optimizer=optimizers.legacy.Adam())
+    m.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, shuffle=True, validation_split=0.1, callbacks=callbacks_list)
+
