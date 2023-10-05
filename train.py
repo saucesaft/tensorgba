@@ -1,4 +1,4 @@
-from keras.engine.sequential import Sequential
+from keras.models import Sequential
 from keras.layers import Conv2D, Dense, Dropout, Flatten
 
 import tensorflow
