@@ -1,7 +1,7 @@
 # mario kart ai
 implementation of [1604.07316](https://arxiv.org/abs/1604.07317). meant to be taught as an small 3 day class system at itesm.
 
-**status: ** the repo is on a stage of logging succesfully the data necesarry, model development and testing is what follows.
+**status: ** the repo is on a stage of logging succesfully the data necesary, model development and testing is what follows.
 
 (repo name is tensorgba because it could work with any other game)
 
@@ -17,7 +17,12 @@ implementation of [1604.07316](https://arxiv.org/abs/1604.07317). meant to be ta
     - [X] test controllers are registered in log window
 - [ ] update requirements.txt for all files
 - [ ] implement logic of receiving inputs in lua
-- [ ] test model
+- [X] test model
 - [ ] work on ppts
     -[ ] diagrams
 - [ ] add instructions in how to run
+
+# ideas for improvement
+- [ ] better gameplay
+- [ ] YUV instead of RGB
+- [ ] smoothing images
