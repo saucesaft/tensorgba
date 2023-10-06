@@ -1,6 +1,4 @@
-from skimage.transform import resize
-from skimage.io import imread
-
+import cv2
 import csv
 import numpy as np
 
@@ -27,12 +25,13 @@ def main():
             if row[0] == 'timestamp':
                 continue
 
-            image = imread( 'data/' + dataset + '/pics/' + row[0] + '.png' )
+            image = cv2.imread( 'data/' + dataset + '/pics/' + row[0] + '.png' )
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
             image = image[30:108, 30:195]
-            resized_image = resize(image, (66, 200, 3))
-            image_array = resized_image.reshape((66, 200, 3))
-            
-            x[idx-1] = image_array
+            image = cv2.resize(image, (200, 66), interpolation=cv2.INTER_LINEAR)
+            image = np.expand_dims(image, axis=0)
+
+            x[idx-1] = image
 
             controller = [eval(i) for i in row[1:]]
             y.append(controller)

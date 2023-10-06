@@ -1,21 +1,18 @@
 #!/usr/bin/env python
-import io
 import threading
 import socket
 import tkinter as tk
 from tkinter import ttk
+
 from PIL import ImageTk, Image
+import cv2
 
 from train import model
-from skimage.transform import resize
-from skimage.io import imread
 import numpy as np
 from threading import Thread
 
 HOST = "127.0.0.1"
 PORT = 8888
-
-# ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 class GBARecorder:
     def __init__(self, root):
@@ -92,20 +89,24 @@ class GBARecorder:
                     break
             try:
                 
-                image = Image.open(io.BytesIO(data))
+                # load photo with opencv
+                image_bytes = np.asarray(bytearray(data), dtype="uint8")
+                image = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-                img_rgb = image.convert('RGB')
-
-                photo = ImageTk.PhotoImage(image)
+                # convert to PIL readable format
+                image_pil = Image.fromarray(image)
+                photo = ImageTk.PhotoImage(image_pil)
                 self.img.config(image=photo)
                 self.img.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
-                img_array = np.array(img_rgb)
-                img_array = img_array[30:108, 30:195]
-                img_array = resize(img_array, (66, 200, 3))
-                img_array = np.expand_dims(img_array, axis=0)
+                # do operations with it and feed it to the CNN
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+                image = image[30:108, 30:195]
+                image = cv2.resize(image, (66, 200), interpolation=cv2.INTER_LINEAR)
+                image = np.expand_dims(image, axis=0)
 
-                thread = Thread(target=self.prediction, args=(img_array,))
+                thread = Thread(target=self.prediction, args=(image,))
                 thread.start()
 
             except:
@@ -113,7 +114,6 @@ class GBARecorder:
 
     def prediction(self, img):
         out = self.m.predict(img, batch_size=1, verbose="0")
-        # print( out )
         print( np.where(out > 0.2, 1, 0) )
         print("--------------")
 
@@ -130,18 +130,24 @@ def main():
 
     print('\n --> start <-- \n')
 
-    # # image = imread('data/cheese_2/pics/1696488126_5.png')
-    # image = imread('test2.png')
-    # image = image[30:108, 30:195]
-    # resized_image = resize(image, (66, 200, 3))
-    # image_array = np.expand_dims(resized_image, axis=0)
-    #
-    # out = m.predict(image_array, batch_size=1, verbose="0")
-    #
-    # print( out )
-    # print( np.where(out > 0.2, 1, 0) )
-    #
-    # return
+
+    m = model()
+    m.load_weights('attempt_yuv.h5')
+
+    image = cv2.imread('test.png')
+    # image = cv2.imread('data/cheese_2/pics/1696488126_5.png')
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+    image = image[30:108, 30:195]
+    image = cv2.resize(image, (200, 66), interpolation=cv2.INTER_LINEAR)
+    image = np.expand_dims(image, axis=0)
+
+    out = m.predict(image, batch_size=1, verbose="0")
+
+    print( out )
+    print( np.where(out > 0.5, 1, 0) )
+
+    return
+
     root = tk.Tk()
     app = GBARecorder(root)
     app.run()

@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     m = model(0.8)
 
-    num = 'repo'
+    num = 'yuv'
 
     dir = os.path.join("logs", "attempt_"+num)
 

@@ -2,31 +2,28 @@
 from keras.applications.vgg16 import preprocess_input
 from keras.models import Model
 from matplotlib import pyplot
-from numpy import expand_dims
 from train import model
 
-from skimage.io import imread
-from skimage.transform import resize
+import cv2
+import numpy as np
 
 # load the model
 m = model()
-m.load_weights('attempt_repo.h5')
+m.load_weights('attempt_yuv.h5')
 m.summary()
 
 # redefine model to output right after the first hidden layer
 m = Model(inputs=m.inputs, outputs=m.layers[0].output)
 
-image = imread( 'test2.png' )
-# image = imread('data/cheese_2/pics/1696488126_5.png')
-
+# image = cv2.imread( 'test.png' )
+image = cv2.imread('data/cheese_2/pics/1696488126_5.png')
+image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
 image = image[30:108, 30:195]
-image_array = resize(image, (66, 200, 3))
-
-image_array = expand_dims(image_array, axis=0)
-image_array = preprocess_input(image_array)
+image = cv2.resize(image, (200, 66), interpolation=cv2.INTER_LINEAR)
+image = np.expand_dims(image, axis=0)
 
 # get feature map for first hidden layer
-feature_maps = m.predict(image_array)
+feature_maps = m.predict(image)
 # plot all 64 maps in an 8x8 squares
 square = 4
 ix = 1

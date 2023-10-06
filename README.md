@@ -1,7 +1,7 @@
 # mario kart ai
 implementation of [1604.07316](https://arxiv.org/abs/1604.07317). meant to be taught as an small 3 day class system at itesm.
 
-**status: ** the repo is on a stage of logging succesfully the data necesary, model development and testing is what follows.
+**status: ** i think i found a sweet spot for training, i will now develop the mechanism to send inputs to the emulator, but for now, with screenshots it seems pretty good
 
 (repo name is tensorgba because it could work with any other game)
 
@@ -24,5 +24,5 @@ implementation of [1604.07316](https://arxiv.org/abs/1604.07317). meant to be ta
 
 # ideas for improvement
 - [ ] better gameplay
-- [ ] YUV instead of RGB
+- [X] YUV instead of RGB
 - [ ] smoothing images
