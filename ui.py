@@ -109,6 +109,9 @@ class Vizualizer(tk.Frame):
                 # open image using collumn 0 from csv
                 frame_path = self.selected_path + "/pics/" + self.csv[self.frame][0] + ".png"
                 frame_img = Image.open(frame_path)
+                
+                frame_img = frame_img.crop((30, 30, 195, 108))
+
                 frame_img = frame_img.resize(( frame_img.size[0]*2 , frame_img.size[1]*2), Image.LANCZOS)
 
                 frame_widget = ImageTk.PhotoImage(frame_img)

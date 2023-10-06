@@ -1,4 +1,3 @@
-# from skimage.color import rgb2gray
 from skimage.transform import resize
 from skimage.io import imread
 
@@ -29,6 +28,7 @@ def main():
                 continue
 
             image = imread( 'data/' + dataset + '/pics/' + row[0] + '.png' )
+            image = image[30:108, 30:195]
             resized_image = resize(image, (66, 200, 3))
             image_array = resized_image.reshape((66, 200, 3))
             

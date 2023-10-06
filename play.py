@@ -6,6 +6,15 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import ImageTk, Image
 
+from train import model
+from skimage.transform import resize
+from skimage.io import imread
+import numpy as np
+# import tensorflow as tf
+# tf.get_logger().setLevel('ERROR')
+# tf.autograph.set_verbosity(0)
+# tf.logging.set_verbosity(tf.logging.ERROR)
+
 HOST = "127.0.0.1"
 PORT = 8888
 
@@ -103,6 +112,25 @@ class GBARecorder:
         self.exit()
 
 def main():
+    m = model(keep_prob=1)
+    m.load_weights('attempt_repo.h5')
+
+    print('\n --> start <-- \n')
+
+    # image = imread('data/cheese_2/pics/1696488126_5.png')
+    image = imread('test2.png')
+    image = image[30:108, 30:195]
+    resized_image = resize(image, (66, 200, 3))
+    image_array = resized_image.reshape((66, 200, 3))
+    image_array = np.expand_dims(image_array, axis=0)
+
+
+    out = m.predict(image_array, batch_size=1, verbose="0")
+
+    print( out )
+    print( np.where(out > 0.2, 1, 0) )
+
+    return
     root = tk.Tk()
     app = GBARecorder(root)
     app.run()
