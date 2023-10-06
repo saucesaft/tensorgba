@@ -10,10 +10,7 @@ from train import model
 from skimage.transform import resize
 from skimage.io import imread
 import numpy as np
-# import tensorflow as tf
-# tf.get_logger().setLevel('ERROR')
-# tf.autograph.set_verbosity(0)
-# tf.logging.set_verbosity(tf.logging.ERROR)
+from threading import Thread
 
 HOST = "127.0.0.1"
 PORT = 8888
@@ -38,6 +35,9 @@ class GBARecorder:
             self.sock = None
 
         self.create_widgets()
+
+        self.m = model()
+        self.m.load_weights('attempt_repo.h5')
 
     def reconnect(self):
         try:
@@ -91,16 +91,31 @@ class GBARecorder:
                 if b'\x00IEND' in chunk:
                     break
             try:
+                
                 image = Image.open(io.BytesIO(data))
 
-                image = image.resize(( 200, 66 ), Image.LANCZOS)
+                img_rgb = image.convert('RGB')
 
                 photo = ImageTk.PhotoImage(image)
+                self.img.config(image=photo)
+                self.img.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+
+                img_array = np.array(img_rgb)
+                img_array = img_array[30:108, 30:195]
+                img_array = resize(img_array, (66, 200, 3))
+                img_array = np.expand_dims(img_array, axis=0)
+
+                thread = Thread(target=self.prediction, args=(img_array,))
+                thread.start()
+
             except:
                 continue
 
-            self.img.config(image=photo)
-            self.img.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+    def prediction(self, img):
+        out = self.m.predict(img, batch_size=1, verbose="0")
+        # print( out )
+        print( np.where(out > 0.2, 1, 0) )
+        print("--------------")
 
     def exit(self):
         self.shouldexit = True
@@ -112,25 +127,21 @@ class GBARecorder:
         self.exit()
 
 def main():
-    m = model(keep_prob=1)
-    m.load_weights('attempt_repo.h5')
 
     print('\n --> start <-- \n')
 
-    # image = imread('data/cheese_2/pics/1696488126_5.png')
-    image = imread('test2.png')
-    image = image[30:108, 30:195]
-    resized_image = resize(image, (66, 200, 3))
-    image_array = resized_image.reshape((66, 200, 3))
-    image_array = np.expand_dims(image_array, axis=0)
-
-
-    out = m.predict(image_array, batch_size=1, verbose="0")
-
-    print( out )
-    print( np.where(out > 0.2, 1, 0) )
-
-    return
+    # # image = imread('data/cheese_2/pics/1696488126_5.png')
+    # image = imread('test2.png')
+    # image = image[30:108, 30:195]
+    # resized_image = resize(image, (66, 200, 3))
+    # image_array = np.expand_dims(resized_image, axis=0)
+    #
+    # out = m.predict(image_array, batch_size=1, verbose="0")
+    #
+    # print( out )
+    # print( np.where(out > 0.2, 1, 0) )
+    #
+    # return
     root = tk.Tk()
     app = GBARecorder(root)
     app.run()
