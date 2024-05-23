@@ -3,6 +3,8 @@ COUNT = 0
 server = nil
 ST_sockets = {}
 nextID = 1
+TOGGLE = false
+PAST = 0
 
 function ST_format(id, msg, isError)
 	local prefix = "Socket " .. id
@@ -13,6 +15,31 @@ function ST_format(id, msg, isError)
 	end
 	return prefix .. msg
 end
+
+
+function ST_received(id)
+	local sock = ST_sockets[id]
+	if not sock then return end
+	while true do
+		local p, err = sock:receive(1024)
+		if p then
+			local keys = tonumber(p)
+			local removes = keys ~ PAST
+
+			emu:clearKeys(removes) -- remove past keypresses that differ
+			emu:addKeys(keys)
+
+			PAST = keys
+		else
+			if err ~= socket.ERRORS.AGAIN then
+				console:error(ST_format(id, err, true))
+				ST_stop(id)
+			end
+			return
+		end
+	end
+end
+
 
 function ST_accept()
 	local sock, err = server:accept()
@@ -30,13 +57,26 @@ end
 
 
 function F_counter()
-
+	-- counter to control the screenshot rate
 	if COUNT == 5 then 
+
+		-- save screenshot
 		local out = emu:saveStateBuffer(1)
 
+		-- send screenshot to all clients
 		for _, sock in pairs(ST_sockets) do
 			if sock then sock:send( out ) end
 		end
+
+		-- if  TOGGLE then
+		-- 	emu:addKeys(19)
+		-- 	console:log("bitmask")
+		-- 	TOGGLE = false
+		-- else
+		-- 	emu:clearKeys(19)
+		-- 	console:log("clear")
+		-- 	TOGGLE = true
+		-- end
 
 		COUNT = 0
 	end

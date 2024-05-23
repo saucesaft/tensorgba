@@ -31,10 +31,12 @@ class GBARecorder:
         except:
             self.sock = None
 
+        self.mode = 'manual'
+
         self.create_widgets()
 
         self.m = model()
-        self.m.load_weights('attempt_repo.h5')
+        self.m.load_weights('attempt_yuv.h5')
 
     def reconnect(self):
         try:
@@ -62,6 +64,12 @@ class GBARecorder:
             self.connbtn["state"] = "normal"
         else:
             self.connbtn["state"] = "disabled"
+
+        self.modelabel = ttk.Label(self.left_frame, text = "modo: " + self.mode)
+        self.modelabel.pack(pady=10)
+
+        self.modebtn = ttk.Button(self.left_frame, text="cambiar modo", command=self.changemode)
+        self.modebtn.pack(pady=10)
 
         self.right_frame = ttk.Frame(self.rec_frame)
         self.right_frame.pack(side=tk.RIGHT, padx=10, pady=10, fill=tk.BOTH, expand=True)
@@ -103,7 +111,7 @@ class GBARecorder:
                 # do operations with it and feed it to the CNN
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
                 image = image[30:108, 30:195]
-                image = cv2.resize(image, (66, 200), interpolation=cv2.INTER_LINEAR)
+                image = cv2.resize(image, (200, 66), interpolation=cv2.INTER_LINEAR)
                 image = np.expand_dims(image, axis=0)
 
                 thread = Thread(target=self.prediction, args=(image,))
@@ -112,10 +120,35 @@ class GBARecorder:
             except:
                 continue
 
+    def changemode(self):
+        if self.mode == 'manual':
+            self.mode = 'ai'
+        else:
+            self.mode = 'manual'
+
+        self.modelabel.config(text = "modo: " + self.mode)
+
     def prediction(self, img):
+        if self.mode != 'ai':
+            return
+
         out = self.m.predict(img, batch_size=1, verbose="0")
-        print( np.where(out > 0.2, 1, 0) )
-        print("--------------")
+        out = np.where(out > 0.5, 1, 0)
+        out = out[0]
+
+        print(out)
+
+        if self.sock is not None:
+
+            result = 0
+            result |= out[0] << 0  # BUTTON_A
+            result |= out[1] << 1  # BUTTON_B
+            result |= out[2] << 4  # BUTTON_RIGHT
+            result |= out[3] << 5  # BUTTON_LEFT
+            result |= out[4] << 7  # BUTTON_DOWN
+            result |= out[5] << 8  # BUTTON_RB
+
+            self.sock.sendall( str(result).encode() )
 
     def exit(self):
         self.shouldexit = True
@@ -131,22 +164,22 @@ def main():
     print('\n --> start <-- \n')
 
 
-    m = model()
-    m.load_weights('attempt_yuv.h5')
-
-    image = cv2.imread('test.png')
-    # image = cv2.imread('data/cheese_2/pics/1696488126_5.png')
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
-    image = image[30:108, 30:195]
-    image = cv2.resize(image, (200, 66), interpolation=cv2.INTER_LINEAR)
-    image = np.expand_dims(image, axis=0)
-
-    out = m.predict(image, batch_size=1, verbose="0")
-
-    print( out )
-    print( np.where(out > 0.5, 1, 0) )
-
-    return
+    # m = model()
+    # m.load_weights('attempt_yuv.h5')
+    #
+    # image = cv2.imread('test.png')
+    # # image = cv2.imread('data/cheese_2/pics/1696488126_5.png')
+    # image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+    # image = image[30:108, 30:195]
+    # image = cv2.resize(image, (200, 66), interpolation=cv2.INTER_LINEAR)
+    # image = np.expand_dims(image, axis=0)
+    #
+    # out = m.predict(image, batch_size=1, verbose="0")
+    #
+    # print( out )
+    # print( np.where(out > 0.5, 1, 0) )
+    #
+    # return
 
     root = tk.Tk()
     app = GBARecorder(root)
